@@ -1,0 +1,19 @@
+server:
+  listen: "0.0.0.0:80"
+
+locations:
+  - path: "/api"
+    proxy_pass: "http://api:3000"
+    rate_limit:
+      requests_per_second: 20
+      burst: 20
+  
+  - path: "/"
+    proxy_pass: "http://pwa:8080"
+    rate_limit:
+      requests_per_second: 50
+      burst: 100
+
+waf:
+  enabled: true
+  custom_rules_path: "/etc/lugh/rules"
