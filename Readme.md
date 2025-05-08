@@ -3,6 +3,10 @@
 Lugh is a high-performance proxy server written in Go that serves as a replacement for nginx with built-in Web 
 Application Firewall (WAF) and rate limiting capabilities.
 
+The name comes rom Irish mythology. Known as Samildánach (“skilled in many arts”), Lugh was a master of all crafts and a 
+fierce protector of the Tuatha Dé Danann. Seen as a solar deity and symbol of strength, leadership, and protection. It
+is the protector aspect that led to the name being adopted for this project.
+
 ## Features
 
 - **HTTP Proxy**: Acts as a reverse proxy for your backend services
@@ -80,7 +84,7 @@ SecRule REQUEST_HEADERS:User-Agent "@contains sqlmap" \
     severity:CRITICAL"
 ```
 
-When the `custom_rules_path` directory is monitored, rule changes are automatically detected and reloaded.
+The `custom_rules_path` directory is monitored, rule changes are automatically detected and reloaded.
 
 ## Usage
 
