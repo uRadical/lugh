@@ -1,3 +1,5 @@
+
+![project logo](./logo.png)
 # Lugh - Go-based Proxy Server with WAF and Rate Limiting
 
 Lugh is a high-performance proxy server written in Go that serves as a replacement for nginx with built-in Web 
