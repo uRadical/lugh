@@ -161,7 +161,7 @@ from our benchmark tests comparing performance with different payload sizes and 
 
 ## Payload Size Impact
 
-![Payload Size Impact](benchmark_results/payload_impact.png)
+![Payload Size Impact](./benchmark_results/payload_impact.png)
 
 The chart above demonstrates how response time scales with payload size. As expected, larger payloads take more time 
 to process, but Lugh maintains excellent performance even with 100KB payloads.
@@ -174,7 +174,7 @@ to process, but Lugh maintains excellent performance even with 100KB payloads.
 
 ## WAF Performance Impact
 
-![WAF Impact](benchmark_results/waf_impact.png)
+![WAF Impact](./benchmark_results/waf_impact.png)
 
 The WAF impact chart shows a comparison of performance with and without the Web Application Firewall enabled. 
 Interestingly, while WAF adds expected overhead for small payloads, it actually improves performance for medium and 
@@ -182,7 +182,7 @@ large payloads in our tests.
 
 ## WAF Overhead Percentage
 
-![WAF Overhead](benchmark_results/waf_overhead_pct.png)
+![WAF Overhead](./benchmark_results/waf_overhead_pct.png)
 
 This chart illustrates the percentage impact of enabling WAF. The negative values for medium and large payloads 
 indicate performance improvements rather than overhead.
