@@ -28,3 +28,5 @@ go.work.sum
 
 benchmark_results/
 benchmark_results.txt
+__pycache__/
+rules/

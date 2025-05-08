@@ -197,6 +197,45 @@ indicate performance improvements rather than overhead.
 | Medium       | 0.46ms      | 0.44ms   | -3.9%        |
 | Large        | 1.35ms      | 0.62ms   | -53.7%       |
 
+
+
+## 🚀 Performance Under Load
+
+![Proxy performance chart](./locust_results.png)
+
+This graph shows the proxy server handling a sustained load of **over 300 requests per second** with:
+
+- **Low latency**: Median response time around **2–3 ms**, 95th percentile under **10 ms**.
+- **Rate limiting**: Proxy enforces limits cleanly, returning `429 Too Many Requests` once configured thresholds are exceeded.
+- **Stability**: 100 concurrent users ramped up smoothly with no signs of instability or performance degradation.
+
+> This test was performed on a **MacBook Air M2** using [Locust](https://locust.io) for load generation.
+
+### 🧪 Test Conditions
+
+**Load Generator**:
+- Tool: Locust v2.x
+- Users: 100 concurrent users
+- Spawn rate: 10 users/second
+- Endpoints tested: `GET /api` and `GET /`
+- Traffic pattern: 3:1 ratio of `/api` to `/`
+
+**Proxy Configuration**:
+- `/api`: 20 RPS, burst 20
+- `/`: 50 RPS, burst 100
+- WAF: Enabled (Coraza with OWASP Core Rule Set)
+- pprof: Enabled on `localhost:6060`
+
+**Test Machine**:
+- Device: Apple MacBook Air (M2, 2022)
+- CPU: 8-core Apple M2
+- RAM: 16 GB unified memory
+- OS: macOS Ventura 13.x
+
+> These results demonstrate that the proxy performs efficiently under load, with rate limits and WAF enabled — even on a fanless laptop.
+
+
+
 ## Analysis
 
 These benchmark results show that Lugh is a high-performance proxy server with excellent characteristics:
@@ -223,6 +262,19 @@ python generate_charts.py
 
 The benchmarks measure performance with different payload sizes (small ~100 bytes, medium 10KB, large 100KB) and 
 with/without WAF enabled.
+
+## Performance Profiling with pprof
+
+This proxy server includes Go's built-in profiler (`pprof`) for performance analysis.
+
+- **pprof endpoint**: `http://localhost:6060/debug/pprof/`
+- **Access**: Only available locally (not exposed publicly)
+- **Usage**:
+
+  To capture a 30-second CPU profile:
+
+  ```bash
+  go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
 
 ## License
 

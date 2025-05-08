@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -130,6 +131,13 @@ func main() {
 			go watchRulesDirectory(config.WAF.CustomRulesPath, &waf)
 		}
 	}
+
+	go func() {
+		log.Println("Starting pprof on :6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			log.Printf("pprof server error: %v", err)
+		}
+	}()
 
 	// Create a new HTTP server
 	server := &http.Server{
