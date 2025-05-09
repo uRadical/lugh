@@ -282,5 +282,5 @@ MIT License
 
 ## Acknowledgments
 
-- [Coraza WAF](https://github.com/corazawaf/coraza/v3) - Web Application Firewall engine
-- [OWASP Core Rule Set](https://github.com/corazawaf/coraza-coreruleset/v4) - Security rules for detecting common attacks
+- [Coraza WAF](https://github.com/corazawaf/coraza) - Web Application Firewall engine
+- [OWASP Core Rule Set](https://github.com/corazawaf/coraza-coreruleset) - Security rules for detecting common attacks
