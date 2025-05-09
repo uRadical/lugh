@@ -13,7 +13,7 @@ is the protector aspect that led to the name being adopted for this project.
 
 - **HTTP Proxy**: Acts as a reverse proxy for your backend services
 - **Path-based Routing**: Route requests to different backends based on URL paths
-- **Built-in WAF**: Integration with [Coraza WAF](https://github.com/corazawaf/coraza/v3) and [OWASP Core Rule Set](https://github.com/corazawaf/coraza-coreruleset/v4)
+- **Built-in WAF**: Integration with [Coraza WAF](https://github.com/corazawaf/coraza) and [OWASP Core Rule Set](https://github.com/corazawaf/coraza-coreruleset/v4)
 - **Rate Limiting**: Token bucket-based rate limiting for each location
 - **Custom Rules**: Support for custom WAF rules with dynamic reloading
 - **Header Forwarding**: Properly forwards headers like nginx does
