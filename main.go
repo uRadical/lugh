@@ -88,14 +88,6 @@ func (l *RateLimiter) Allow() bool {
 	return false
 }
 
-// min returns the minimum of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // Global map of path prefixes to rate limiters
 var rateLimiters = make(map[string]*RateLimiter)
 
@@ -196,20 +188,14 @@ func initializeWAF(customRulesPath string) (coraza.WAF, error) {
 
 	// Set up directives from core rule set
 	directives := `
-	# Enable rule engine
-	SecRuleEngine On
+	# Include Coraza recommended configuration
+	Include @coraza.conf-recommended
+	
+	# Include CRS setup configuration
+	Include @crs-setup.conf.example
 	
 	# Include OWASP CRS rules
-	Include @owasp_crs/REQUEST-911-METHOD-ENFORCEMENT.conf
-	Include @owasp_crs/REQUEST-913-SCANNER-DETECTION.conf
-	Include @owasp_crs/REQUEST-920-PROTOCOL-ENFORCEMENT.conf
-	Include @owasp_crs/REQUEST-921-PROTOCOL-ATTACK.conf
-	Include @owasp_crs/REQUEST-930-APPLICATION-ATTACK-LFI.conf
-	Include @owasp_crs/REQUEST-932-APPLICATION-ATTACK-RCE.conf
-	Include @owasp_crs/REQUEST-941-APPLICATION-ATTACK-XSS.conf
-	Include @owasp_crs/REQUEST-942-APPLICATION-ATTACK-SQLI.conf
-	Include @owasp_crs/REQUEST-943-APPLICATION-ATTACK-SESSION-FIXATION.conf
-	Include @owasp_crs/REQUEST-944-APPLICATION-ATTACK-JAVA.conf
+	Include @owasp_crs/*.conf
 	`
 
 	// Use CRS filesystem
@@ -319,6 +305,33 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 					targetLocation = &config.Locations[i]
 					log.Printf("Found prefix path match: %s", location.Path)
 					break
+				}
+			}
+		}
+
+		// Check if this is a Vite asset request based on Referer header or path patterns
+		if targetLocation == nil || targetLocation.Path == "/" {
+			// Check if it's a Vite-specific path
+			isViteAsset := strings.HasPrefix(r.URL.Path, "/@") ||
+				strings.HasPrefix(r.URL.Path, "/src/") ||
+				strings.HasPrefix(r.URL.Path, "/node_modules/") ||
+				r.URL.Path == "/vite.svg" ||
+				strings.Contains(r.URL.Path, ".js") ||
+				strings.Contains(r.URL.Path, ".css")
+
+			// Check referer header
+			referer := r.Header.Get("Referer")
+			if isViteAsset && referer != "" {
+				refURL, err := url.Parse(referer)
+				if err == nil && strings.HasPrefix(refURL.Path, "/app") {
+					// This is an asset request from /app, route it to the app location
+					for i, location := range config.Locations {
+						if location.Path == "/app" {
+							targetLocation = &config.Locations[i]
+							log.Printf("Routing Vite asset %s to /app based on referer", r.URL.Path)
+							break
+						}
+					}
 				}
 			}
 		}
@@ -448,14 +461,38 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 		// Create reverse proxy
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
+		// Log the proxy target
+		log.Printf("Proxying to: %s (location path: %s)", targetURL.String(), targetLocation.Path)
+
 		// Set up custom director to modify the request before sending
 		originalDirector := proxy.Director
 		proxy.Director = func(req *http.Request) {
+			// Log original path
+			originalPath := req.URL.Path
+
 			originalDirector(req)
+
+			// Strip the location prefix from the path if it's not root
+			if targetLocation.Path != "/" && strings.HasPrefix(req.URL.Path, targetLocation.Path) {
+				req.URL.Path = strings.TrimPrefix(req.URL.Path, targetLocation.Path)
+				if req.URL.Path == "" {
+					req.URL.Path = "/"
+				}
+				log.Printf("Path rewrite: %s -> %s", originalPath, req.URL.Path)
+			}
+
+			// Log final request URL
+			log.Printf("Final request URL: %s", req.URL.String())
+
+			// Set the Host header to match the backend
+			req.Host = targetURL.Host
+			req.Header.Set("Host", targetURL.Host)
+			log.Printf("Setting Host header to: %s (was: %s)", targetURL.Host, r.Host)
 
 			// Set additional headers like nginx does
 			req.Header.Set("X-Real-IP", r.RemoteAddr)
 			req.Header.Set("X-Forwarded-Proto", r.URL.Scheme)
+			req.Header.Set("X-Forwarded-Host", r.Host)
 
 			// Forward the Origin header
 			if origin := r.Header.Get("Origin"); origin != "" {
