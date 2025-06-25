@@ -287,11 +287,18 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 			} `yaml:"rate_limit"`
 		}
 
-		// First try exact match
+		// First try exact match (with trailing slash normalization)
 		for i, location := range config.Locations {
 			if r.URL.Path == location.Path {
 				targetLocation = &config.Locations[i]
 				log.Printf("Found exact path match: %s", location.Path)
+				break
+			}
+			// Also check for trailing slash variants
+			if strings.TrimSuffix(r.URL.Path, "/") == strings.TrimSuffix(location.Path, "/") && 
+			   r.URL.Path != "/" && location.Path != "/" {
+				targetLocation = &config.Locations[i]
+				log.Printf("Found trailing slash normalized match: %s matches %s", r.URL.Path, location.Path)
 				break
 			}
 		}
@@ -477,6 +484,10 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 				req.URL.Path = strings.TrimPrefix(req.URL.Path, targetLocation.Path)
 				if req.URL.Path == "" {
 					req.URL.Path = "/"
+				}
+				// Special handling for /app path - ensure it has trailing slash for http-server
+				if strings.TrimSuffix(targetLocation.Path, "/") == "/app" && req.URL.Path == "/" {
+					req.URL.Path = "/app/"
 				}
 				log.Printf("Path rewrite: %s -> %s", originalPath, req.URL.Path)
 			}
