@@ -295,8 +295,8 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 				break
 			}
 			// Also check for trailing slash variants
-			if strings.TrimSuffix(r.URL.Path, "/") == strings.TrimSuffix(location.Path, "/") && 
-			   r.URL.Path != "/" && location.Path != "/" {
+			if strings.TrimSuffix(r.URL.Path, "/") == strings.TrimSuffix(location.Path, "/") &&
+				r.URL.Path != "/" && location.Path != "/" {
 				targetLocation = &config.Locations[i]
 				log.Printf("Found trailing slash normalized match: %s matches %s", r.URL.Path, location.Path)
 				break
@@ -479,17 +479,10 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 
 			originalDirector(req)
 
-			// Strip the location prefix from the path if it's not root
-			if targetLocation.Path != "/" && strings.HasPrefix(req.URL.Path, targetLocation.Path) {
-				req.URL.Path = strings.TrimPrefix(req.URL.Path, targetLocation.Path)
-				if req.URL.Path == "" {
-					req.URL.Path = "/"
-				}
-				// Special handling for /app path - ensure it has trailing slash for http-server
-				if strings.TrimSuffix(targetLocation.Path, "/") == "/app" && req.URL.Path == "/" {
-					req.URL.Path = "/app/"
-				}
-				log.Printf("Path rewrite: %s -> %s", originalPath, req.URL.Path)
+			// For paths that match the location exactly (without trailing slash), add the trailing slash
+			if targetLocation.Path != "/" && req.URL.Path == targetLocation.Path && !strings.HasSuffix(req.URL.Path, "/") {
+				req.URL.Path = req.URL.Path + "/"
+				log.Printf("Adding trailing slash: %s -> %s", originalPath, req.URL.Path)
 			}
 
 			// Log final request URL
