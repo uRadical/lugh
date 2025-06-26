@@ -507,6 +507,27 @@ func createProxyHandler(config Config, waf coraza.WAF) http.Handler {
 			if cookies := r.Header.Get("Cookie"); cookies != "" {
 				req.Header.Set("Cookie", cookies)
 			}
+
+			// Handle WebSocket upgrade requests
+			if r.Header.Get("Upgrade") == "websocket" {
+				// Forward the Connection and Upgrade headers
+				req.Header.Set("Connection", "Upgrade")
+				req.Header.Set("Upgrade", "websocket")
+				
+				// Forward WebSocket-specific headers
+				for _, h := range []string{
+					"Sec-WebSocket-Version",
+					"Sec-WebSocket-Key",
+					"Sec-WebSocket-Extensions",
+					"Sec-WebSocket-Protocol",
+				} {
+					if v := r.Header.Get(h); v != "" {
+						req.Header.Set(h, v)
+					}
+				}
+				
+				log.Printf("WebSocket upgrade detected for %s", req.URL.String())
+			}
 		}
 
 		// Serve the request through the proxy
